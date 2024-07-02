@@ -1,0 +1,14 @@
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        var config = WebHostConfiguration.GetDefault(args);
+
+        var host = new WebHostBuilder()
+            .UseConfiguration(config)
+            .Build();
+
+        // This call will block until the service is stopped.
+        host.RunAsService();
+    }
+}
