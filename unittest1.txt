@@ -1,31 +1,23 @@
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Testing;
+using SymbolMappingPublisher;
 using Xunit;
 
-namespace MyWebApplication.Tests
+namespace SymbolMappingPublisher.Tests
 {
-    public class BasicTests : IClassFixture<WebApplicationFactory<Program>>
+    public class SymbolMappingTests
     {
-        private readonly WebApplicationFactory<Program> _factory;
-
-        public BasicTests(WebApplicationFactory<Program> factory)
-        {
-            _factory = factory;
-        }
-
         [Fact]
-        public async Task GetRoot_ReturnsHelloWorld()
+        public void ItemSymbol_GetSet_Success()
         {
             // Arrange
-            var client = _factory.CreateClient();
+            var symbolMapping = new SymbolMapping();
+            var testSymbol = "TestSymbol";
 
             // Act
-            var response = await client.GetAsync("/");
+            symbolMapping.ItemSymbol = testSymbol;
+            var result = symbolMapping.ItemSymbol;
 
             // Assert
-            response.EnsureSuccessStatusCode(); // Status Code 200-299
-            var responseString = await response.Content.ReadAsStringAsync();
-            Assert.Equal("Hello World!", responseString);
+            Assert.Equal(testSymbol, result);
         }
     }
 }
