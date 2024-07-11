@@ -1,115 +1,122 @@
-To write a simple HTTP GET request using curl++ 8.8.0_2 in a Visual C++ application for Windows, you'll need to follow these steps:
+To specify the entry point for a C# project in GitHub Actions, you typically need to configure the workflow file to build and test the solution (.sln) file. This involves creating or editing the YAML file in the .github/workflows directory of your repository.
 
-Set up your development environment: Ensure you have curl++ and its dependencies installed. You can usually get these via vcpkg or another package manager.
+Here’s how you can do it:
 
-Include the necessary headers: Add the necessary curl headers in your Visual C++ project.
+Create or Edit a Workflow File:
 
-Write the code for the HTTP GET request: Use the curl++ library to perform the GET request.
+Navigate to your repository on GitHub.
+Go to the .github/workflows directory. If it doesn't exist, create it.
+Create a new file or edit an existing one (e.g., ci.yml).
+Define the Workflow:
 
-Here's a step-by-step example of how to do this:
-
-Step 1: Install cURL++ Library
-Make sure to install the cURL library and cURL++ wrapper. You can do this using vcpkg:
-
-sh
+Use the following template to define a workflow that builds and tests a C# solution. Adjust the file paths and commands as necessary for your project.
+yaml
 Copy code
-vcpkg install curlpp
-Step 2: Set Up Visual Studio Project
-Open Visual Studio and create a new Console Application project.
-Configure the project to include the cURL and curl++ libraries and headers.
-Link the cURL and curl++ libraries in your project settings.
-Step 3: Include Necessary Headers
-In your main .cpp file, include the necessary headers:
+name: .NET Core
 
-cpp
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0.x' # Adjust the .NET version as needed
+
+    - name: Restore dependencies
+      run: dotnet restore path/to/your/solution.sln
+
+    - name: Build
+      run: dotnet build path/to/your/solution.sln --no-restore --configuration Release
+
+    - name: Test
+      run: dotnet test path/to/your/solution.sln --no-restore --verbosity normal
+Adding Secrets and Variables
+To add secrets and variables in GitHub:
+
+Repository Secrets:
+
+Go to your repository on GitHub.
+Click on Settings.
+In the sidebar, click Secrets and variables, then Actions.
+Click New repository secret to add a new secret.
+Environment Variables:
+
+In your workflow file, you can use the env keyword to define environment variables.
+yaml
 Copy code
-#include <iostream>
-#include <curl/curl.h>
-#include <curlpp/cURLpp.hpp>
-#include <curlpp/Options.hpp>
-Step 4: Write the Code for HTTP GET Request
-Here's a complete example of performing a simple HTTP GET request:
-
-cpp
+env:
+  MY_VARIABLE: my_value
+Using Secrets in Workflows
+yaml
 Copy code
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <curl/curl.h>
-#include <curlpp/cURLpp.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/Easy.hpp>
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+      - name: Restore dependencies
+        run: dotnet restore path/to/your/solution.sln
+        env:
+          MY_SECRET: ${{ secrets.MY_SECRET }}
+      - name: Build
+        run: dotnet build path/to/your/solution.sln --no-restore --configuration Release
+        env:
+          MY_SECRET: ${{ secrets.MY_SECRET }}
+      - name: Test
+        run: dotnet test path/to/your/solution.sln --no-restore --verbosity normal
+        env:
+          MY_SECRET: ${{ secrets.MY_SECRET }}
+Example Workflow File with Secrets and Variables
+yaml
+Copy code
+name: .NET Core
 
-static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp)
-{
-    ((std::string*)userp)->append((char*)contents, size * nmemb);
-    return size * nmemb;
-}
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-int main()
-{
-    try
-    {
-        // Initialize cURLpp
-        curlpp::Cleanup myCleanup;
+env:
+  MY_VARIABLE: my_value
 
-        // Define the URL
-        std::string url = "http://www.example.com";
-
-        // Create a cURLpp::Easy object
-        curlpp::Easy myRequest;
-
-        // Set the URL option
-        myRequest.setOpt(curlpp::options::Url(url));
-
-        // Create a string to hold the response data
-        std::string responseString;
-        std::ostringstream responseStream;
-
-        // Set the write function callback
-        myRequest.setOpt(new curlpp::options::WriteFunction(curlpp::types::WriteFunctionFunctor([&responseString](char* ptr, size_t size, size_t nmemb) {
-            responseString.append(ptr, size * nmemb);
-            return size * nmemb;
-        })));
-
-        // Perform the request
-        myRequest.perform();
-
-        // Output the response
-        std::cout << "Response: " << responseString << std::endl;
-    }
-    catch (curlpp::LogicError& e)
-    {
-        std::cerr << "LogicError: " << e.what() << std::endl;
-    }
-    catch (curlpp::RuntimeError& e)
-    {
-        std::cerr << "RuntimeError: " << e.what() << std::endl;
-    }
-
-    return 0;
-}
-Explanation
-Initialization: curlpp::Cleanup myCleanup initializes cURLpp and ensures cleanup is done automatically.
-
-Set URL: The myRequest.setOpt(curlpp::options::Url(url)) sets the URL for the request.
-
-Response Handling: A lambda function is used to handle the response data. The WriteFunction option is set to capture the response data into a string.
-
-Perform the Request: The myRequest.perform() performs the actual GET request.
-
-Error Handling: The code includes basic error handling for cURLpp logic and runtime errors.
-
-Build and Run
-Make sure to link against the cURL and cURLpp libraries.
-Build the project in Visual Studio.
-Run the executable to see the output of the HTTP GET request.
-This example demonstrates a simple HTTP GET request using cURLpp in a Visual C++ application. Ensure your development environment is correctly set up with the necessary libraries and paths.
-
-
-
-
-
-
-
-
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+      - name: Restore dependencies
+        run: dotnet restore path/to/your/solution.sln
+        env:
+          MY_SECRET: ${{ secrets.MY_SECRET }}
+      - name: Build
+        run: dotnet build path/to/your/solution.sln --no-restore --configuration Release
+        env:
+          MY_SECRET: ${{ secrets.MY_SECRET }}
+      - name: Test
+        run: dotnet test path/to/your/solution.sln --no-restore --verbosity normal
+        env:
+          MY_SECRET: ${{ secrets.MY_SECRET }}
+This setup ensures that GitHub Actions understands the entry point is the solution (.sln) file and builds and tests the project accordingly, while also allowing the use of secrets and environment variables as needed.
