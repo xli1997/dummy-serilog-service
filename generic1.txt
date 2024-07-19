@@ -1,0 +1,147 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System;
+using System.IO;
+using System.Threading;
+
+namespace SymbolMappingPublisher.Controllers
+{
+    [ApiController]
+    [Route("[controller]")]
+    public class MappingController<T> : ControllerBase where T : IMapping
+    {
+        private readonly T _mapping;
+        private readonly ILogger _logger;
+
+        public MappingController(ILogger<MappingController<T>> logger, T mapping)
+        {
+            _mapping = mapping;
+            _logger = logger;
+        }
+
+        [HttpGet("data-v1")]
+        public IActionResult GetMappingV1()
+        {
+            return GetMappingData("V1");
+        }
+
+        [HttpGet("data-v2")]
+        public IActionResult GetMappingV2()
+        {
+            return GetMappingData("V2");
+        }
+
+        private IActionResult GetMappingData(string version)
+        {
+            _mapping.Lock.EnterReadLock();
+            try
+            {
+                string filePath = _mapping.GetFilePath(version);
+                if (!System.IO.File.Exists(filePath))
+                {
+                    return NotFound("File not found.");
+                }
+
+                var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                return new FileStreamResult(fileStream, "text/plain")
+                {
+                    FileDownloadName = "data"
+                };
+            }
+            finally
+            {
+                _mapping.Lock.ExitReadLock();
+            }
+        }
+
+        [HttpGet("timestamp")]
+        public ActionResult<DateTime> GetMappingTimeStamp()
+        {
+            DateTime lastUpdateTimeStamp;
+            _mapping.Lock.EnterReadLock();
+            try
+            {
+                lastUpdateTimeStamp = _mapping.GetTimeStamp();
+                return Ok($"{lastUpdateTimeStamp}");
+            }
+            finally
+            {
+                _mapping.Lock.ExitReadLock();
+            }
+        }
+    }
+}
+
+//======================================================
+
+public interface IMapping
+{
+    ReaderWriterLockSlim Lock { get; }
+    DateTime GetTimeStamp();
+    string GetFilePath(string version);
+}
+
+public class EquityMapping : IMapping
+{
+    public ReaderWriterLockSlim Lock { get; } = new ReaderWriterLockSlim();
+
+    public DateTime GetTimeStamp()
+    {
+        // Implement your logic to get the timestamp
+        return DateTime.Now;
+    }
+
+    public string GetFilePath(string version)
+    {
+        return Path.Combine(AppContext.BaseDirectory, $"Symbol_EQT_Mapping_{version}.dat");
+    }
+}
+
+public class FutureMapping : IMapping
+{
+    public ReaderWriterLockSlim Lock { get; } = new ReaderWriterLockSlim();
+
+    public DateTime GetTimeStamp()
+    {
+        // Implement your logic to get the timestamp
+        return DateTime.Now;
+    }
+
+    public string GetFilePath(string version)
+    {
+        return Path.Combine(AppContext.BaseDirectory, $"Symbol_FUT_Mapping_{version}.dat");
+    }
+}
+
+//-------------------------------------
+
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddControllers();
+        
+        // Register specific mappings
+        services.AddSingleton<EquityMapping>();
+        services.AddSingleton<FutureMapping>();
+        
+        // Register generic controllers
+        services.AddScoped(typeof(MappingController<EquityMapping>));
+        services.AddScoped(typeof(MappingController<FutureMapping>));
+    }
+
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+        }
+
+        app.UseRouting();
+
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+        });
+    }
+}
