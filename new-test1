@@ -1,0 +1,31 @@
+using System;
+using System.IO;
+
+class Program
+{
+    static void Main()
+    {
+        string rootDirectory = @"C:\path\to\start"; // Change this to your starting directory
+        string searchTerm = "SymbolMapping";
+
+        ScanDirectories(rootDirectory, searchTerm);
+    }
+
+    static void ScanDirectories(string rootDirectory, string searchTerm)
+    {
+        try
+        {
+            foreach (string directory in Directory.GetDirectories(rootDirectory, "*", SearchOption.AllDirectories))
+            {
+                if (directory.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine(directory);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
+    }
+}
