@@ -1,122 +1,147 @@
-To specify the entry point for a C# project in GitHub Actions, you typically need to configure the workflow file to build and test the solution (.sln) file. This involves creating or editing the YAML file in the .github/workflows directory of your repository.
 
-Here’s how you can do it:
+To modify the RunSQL function to return a value indicating the success or failure of the operation, we can change the return type to bool and return true for a successful run and false for any exceptions caught. Here’s the updated code:
 
-Create or Edit a Workflow File:
-
-Navigate to your repository on GitHub.
-Go to the .github/workflows directory. If it doesn't exist, create it.
-Create a new file or edit an existing one (e.g., ci.yml).
-Define the Workflow:
-
-Use the following template to define a workflow that builds and tests a C# solution. Adjust the file paths and commands as necessary for your project.
-yaml
+csharp
 Copy code
-name: .NET Core
+public bool RunSQL(ILogger _logger, string sqlServer)
+{
+    string connectionString = $"Integrated Security=SSPI;Database={DataBase};Server={sqlServer}";
+    using (SqlConnection connection = new SqlConnection(connectionString))
+    {
+        try
+        {
+            connection.Open();
+            using (SqlCommand command = new SqlCommand(StoredProc, connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.AddWithValue("@DataType", DataType);
+                SqlParameter CurrentListDateOUT = new SqlParameter
+                {
+                    ParameterName = "@CurrentListDateOUT",
+                    SqlDbType = SqlDbType.DateTime,
+                    Direction = ParameterDirection.Output
+                };
+                command.Parameters.Add(CurrentListDateOUT);
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    var results = new List<Dictionary<string, object>>();
+                    while (reader.Read())
+                    {
+                        var row = new Dictionary<string, object>();
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            row[reader.GetName(i)] = reader.GetValue(i);
+                        }
+                        results.Add(row);
+                    }
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+                    foreach (var row in results)
+                    {
+                        Record record = new Record((string)row["SUBSCRIPTION_SYMBOL"], (string)row["SYMBOL"], (decimal)row["QUOTE_FACTOR"], (string)row["OX_INTERNAL_SYMBOL"]);
+                        MappingList.Add(record);
+                    }
 
-jobs:
-  build:
+                    string dateTime = command.Parameters["@CurrentListDateOUT"].SqlValue.ToString();
+                    LastUpdateDateTime = (DateTime)command.Parameters["@CurrentListDateOUT"].Value;
+                    WriteToCacheDataFile();
+                }
+            }
+            return true; // Indicate successful run
+        }
+        catch (SqlException ex)
+        {
+            _logger.LogError("SQL exception occurred while executing the stored procedure:");
+            _logger.LogError($"Error Code: {ex.ErrorCode}");
+            _logger.LogError($"Error Message: {ex.Message}");
+            return false; // Indicate failure due to SQL exception
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("An unexpected error occurred:");
+            _logger.LogError($"Error Message: {ex.Message}");
+            return false; // Indicate failure due to general exception
+        }
+        finally
+        {
+            // The connection will be closed automatically when it goes out of scope due to the using statement
+        }
+    }
+}
+Unit Test for RunSQL
+Here is a simple unit test for the RunSQL function using the Moq library for mocking and xUnit for the test framework:
 
-    runs-on: ubuntu-latest
+Install Moq and xUnit packages:
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '6.0.x' # Adjust the .NET version as needed
-
-    - name: Restore dependencies
-      run: dotnet restore path/to/your/solution.sln
-
-    - name: Build
-      run: dotnet build path/to/your/solution.sln --no-restore --configuration Release
-
-    - name: Test
-      run: dotnet test path/to/your/solution.sln --no-restore --verbosity normal
-Adding Secrets and Variables
-To add secrets and variables in GitHub:
-
-Repository Secrets:
-
-Go to your repository on GitHub.
-Click on Settings.
-In the sidebar, click Secrets and variables, then Actions.
-Click New repository secret to add a new secret.
-Environment Variables:
-
-In your workflow file, you can use the env keyword to define environment variables.
-yaml
+shell
 Copy code
-env:
-  MY_VARIABLE: my_value
-Using Secrets in Workflows
-yaml
+dotnet add package Moq
+dotnet add package xunit
+dotnet add package xunit.runner.visualstudio
+Write the unit test:
+
+csharp
 Copy code
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '6.0.x'
-      - name: Restore dependencies
-        run: dotnet restore path/to/your/solution.sln
-        env:
-          MY_SECRET: ${{ secrets.MY_SECRET }}
-      - name: Build
-        run: dotnet build path/to/your/solution.sln --no-restore --configuration Release
-        env:
-          MY_SECRET: ${{ secrets.MY_SECRET }}
-      - name: Test
-        run: dotnet test path/to/your/solution.sln --no-restore --verbosity normal
-        env:
-          MY_SECRET: ${{ secrets.MY_SECRET }}
-Example Workflow File with Secrets and Variables
-yaml
-Copy code
-name: .NET Core
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using Moq;
+using Xunit;
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+public class RunSQLTests
+{
+    [Fact]
+    public void RunSQL_ShouldReturnTrue_WhenRunIsSuccessful()
+    {
+        // Arrange
+        var mockLogger = new Mock<ILogger>();
+        string sqlServer = "localhost";
+        var sqlConnectionMock = new Mock<SqlConnection>();
+        var sqlCommandMock = new Mock<SqlCommand>();
+        var sqlDataReaderMock = new Mock<SqlDataReader>();
 
-env:
-  MY_VARIABLE: my_value
+        sqlConnectionMock.Setup(conn => conn.Open());
+        sqlCommandMock.Setup(cmd => cmd.ExecuteReader()).Returns(sqlDataReaderMock.Object);
+        sqlDataReaderMock.Setup(reader => reader.Read()).Returns(false); // No rows
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '6.0.x'
-      - name: Restore dependencies
-        run: dotnet restore path/to/your/solution.sln
-        env:
-          MY_SECRET: ${{ secrets.MY_SECRET }}
-      - name: Build
-        run: dotnet build path/to/your/solution.sln --no-restore --configuration Release
-        env:
-          MY_SECRET: ${{ secrets.MY_SECRET }}
-      - name: Test
-        run: dotnet test path/to/your/solution.sln --no-restore --verbosity normal
-        env:
-          MY_SECRET: ${{ secrets.MY_SECRET }}
-This setup ensures that GitHub Actions understands the entry point is the solution (.sln) file and builds and tests the project accordingly, while also allowing the use of secrets and environment variables as needed.
+        // Act
+        var result = new YourClass().RunSQL(mockLogger.Object, sqlServer);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void RunSQL_ShouldReturnFalse_WhenSqlExceptionIsThrown()
+    {
+        // Arrange
+        var mockLogger = new Mock<ILogger>();
+        string sqlServer = "localhost";
+        var sqlConnectionMock = new Mock<SqlConnection>();
+
+        sqlConnectionMock.Setup(conn => conn.Open()).Throws(new SqlException());
+
+        // Act
+        var result = new YourClass().RunSQL(mockLogger.Object, sqlServer);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void RunSQL_ShouldReturnFalse_WhenGeneralExceptionIsThrown()
+    {
+        // Arrange
+        var mockLogger = new Mock<ILogger>();
+        string sqlServer = "localhost";
+        var sqlConnectionMock = new Mock<SqlConnection>();
+
+        sqlConnectionMock.Setup(conn => conn.Open()).Throws(new Exception());
+
+        // Act
+        var result = new YourClass().RunSQL(mockLogger.Object, sqlServer);
+
+        // Assert
+        Assert.False(result);
+    }
+}
+Make sure to replace YourClass with the actual name of your class that contains the RunSQL method. These tests cover the scenarios where the method runs successfully, throws a SqlException, and throws a general Exception.
