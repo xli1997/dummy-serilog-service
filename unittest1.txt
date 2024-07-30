@@ -1,23 +1,47 @@
+
 using SymbolMappingPublisher;
 using Xunit;
 
 namespace SymbolMappingPublisher.Tests
 {
-    public class SymbolMappingTests
+    public class RecordTests
     {
         [Fact]
-        public void ItemSymbol_GetSet_Success()
+        public void Record_Constructor_ShouldInitializeProperties()
         {
             // Arrange
-            var symbolMapping = new SymbolMapping();
-            var testSymbol = "TestSymbol";
+            string expectedSubscriptionSymbol = "TestSubscriptionSymbol";
+            string expectedSymbol = "TestSymbol";
+            decimal expectedFactor = 10.5m;
+            string expectedOxInternalSymbol = "TestOxInternalSymbol";
 
             // Act
-            symbolMapping.ItemSymbol = testSymbol;
-            var result = symbolMapping.ItemSymbol;
+            var record = new Record(expectedSubscriptionSymbol, expectedSymbol, expectedFactor, expectedOxInternalSymbol);
 
             // Assert
-            Assert.Equal(testSymbol, result);
+            Assert.Equal(expectedSubscriptionSymbol, record.SubscriptionSymbol);
+            Assert.Equal(expectedSymbol, record.Symbol);
+            Assert.Equal(expectedFactor, record.Factor);
+            Assert.Equal(expectedOxInternalSymbol, record.OxInternalSymbol);
+        }
+
+        [Fact]
+        public void Record_Constructor_ShouldSetDefaultOxInternalSymbol()
+        {
+            // Arrange
+            string expectedSubscriptionSymbol = "TestSubscriptionSymbol";
+            string expectedSymbol = "TestSymbol";
+            decimal expectedFactor = 10.5m;
+            string expectedOxInternalSymbol = "";
+
+            // Act
+            var record = new Record(expectedSubscriptionSymbol, expectedSymbol, expectedFactor);
+
+            // Assert
+            Assert.Equal(expectedSubscriptionSymbol, record.SubscriptionSymbol);
+            Assert.Equal(expectedSymbol, record.Symbol);
+            Assert.Equal(expectedFactor, record.Factor);
+            Assert.Equal(expectedOxInternalSymbol, record.OxInternalSymbol);
         }
     }
 }
