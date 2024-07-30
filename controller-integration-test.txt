@@ -1,0 +1,73 @@
+To write integration test code for the EquityMappingController in ASP.NET Core, you can use the xUnit testing framework along with Microsoft.AspNetCore.Mvc.Testing to create an in-memory test server.
+
+First, ensure you have the following NuGet packages installed in your test project:
+
+xUnit
+xUnit.runner.visualstudio
+Microsoft.AspNetCore.Mvc.Testing
+Microsoft.NET.Test.Sdk
+FluentAssertions (for assertions)
+Below is an example of how to write integration tests for the controller functions:
+
+Create the Test Project: If you haven't already, create a new test project in your solution.
+Add the Integration Test Code:
+csharp
+Copy code
+using System.Net.Http;
+using System.Threading.Tasks;
+using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit;
+
+namespace MarketDataReference.IntegrationTests
+{
+    public class EquityMappingControllerTests : IClassFixture<WebApplicationFactory<MarketDataReference.Startup>>
+    {
+        private readonly HttpClient _client;
+
+        public EquityMappingControllerTests(WebApplicationFactory<MarketDataReference.Startup> factory)
+        {
+            _client = factory.CreateClient();
+        }
+
+        [Fact]
+        public async Task GetEquityMapping_ShouldReturnExpectedResult()
+        {
+            // Act
+            var response = await _client.GetAsync("/EquityMapping/data");
+
+            // Assert
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().NotBeNullOrEmpty();
+        }
+
+        [Fact]
+        public async Task GetEquityMappingTimeStamp_ShouldReturnDateTime()
+        {
+            // Act
+            var response = await _client.GetAsync("/EquityMapping/timestamp");
+
+            // Assert
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            DateTime.TryParse(content, out var result).Should().BeTrue();
+        }
+    }
+}
+Explanation:
+Setup:
+
+The EquityMappingControllerTests class uses IClassFixture<WebApplicationFactory<MarketDataReference.Startup>> to set up the test server.
+The HttpClient is created using the WebApplicationFactory.
+Tests:
+
+GetEquityMapping_ShouldReturnExpectedResult: This test verifies that the /EquityMapping/data endpoint returns a successful response with a non-empty content.
+GetEquityMappingTimeStamp_ShouldReturnDateTime: This test verifies that the /EquityMapping/timestamp endpoint returns a successful response with a valid DateTime string.
+Ensure that your API's startup class (MarketDataReference.Startup) is correctly set up to configure the services and the app for testing. Additionally, you may need to mock dependencies or provide test-specific configurations for services like EquityMapping and ILogger.
+
+To run the tests, you can use the test explorer in Visual Studio or run the following command in the terminal within the test project directory:
+
+sh
+Copy code
+dotnet test
