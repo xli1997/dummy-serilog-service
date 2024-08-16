@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Threading;
 
 class Program
 {
@@ -58,7 +59,7 @@ class Program
 
             // Record the response time
             double responseTime = stopwatch.Elapsed.TotalMilliseconds;
-            totalResponseTime += responseTime;
+            Interlocked.Add(ref totalResponseTime, responseTime);
 
             // Read the response content
             var content = await response.Content.ReadAsStringAsync();
@@ -69,7 +70,7 @@ class Program
             // Check if the request was successful (2xx status code)
             if (response.IsSuccessStatusCode)
             {
-                successfulRequests++;
+                Interlocked.Increment(ref successfulRequests);
             }
         }
         catch (Exception ex)
