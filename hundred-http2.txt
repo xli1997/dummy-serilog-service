@@ -1,0 +1,47 @@
+using System.Threading.Tasks;
+
+class Program
+{
+    static async Task Main()
+    {
+        const string apiUrl = "https://your-api-endpoint.com"; // Replace with your API URL
+        const int maxConcurrentRequests = 100; // Set your desired concurrency
+
+        var stopwatch = new Stopwatch();
+        var httpClient = new HttpClient();
+
+        // Generate unique URLs for each request (you can modify this logic)
+        string[] requestUrls = new string[maxConcurrentRequests];
+        for (int i = 0; i < maxConcurrentRequests; i++)
+        {
+            requestUrls[i] = $"{apiUrl}/endpoint{i + 1}";
+        }
+
+        // Send concurrent requests
+        var tasks = new Task[maxConcurrentRequests];
+        for (int i = 0; i < maxConcurrentRequests; i++)
+        {
+            tasks[i] = SendHttpRequest(httpClient, requestUrls[i]);
+        }
+
+        stopwatch.Start();
+        await Task.WhenAll(tasks);
+        stopwatch.Stop();
+
+        Console.WriteLine($"Total elapsed time: {stopwatch.ElapsedMilliseconds} ms");
+    }
+
+    static async Task SendHttpRequest(HttpClient httpClient, string url)
+    {
+        try
+        {
+            var response = await httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            // Process the response as needed
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+}
