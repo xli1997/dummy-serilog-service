@@ -53,3 +53,108 @@ class Program
         }
     }
 }
+
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Amazon;
+using Amazon.S3;
+using Amazon.S3.Model;
+using Amazon.Runtime;
+using Amazon.S3.Transfer;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Define the S3 service point, access keys, and other configurations
+        string endpoint = "https://textA"; // S3-compatible endpoint URL
+        string accessKey = "textB"; // Your Access Key
+        string secretKey = "textC"; // Your Secret Key
+        string bucketName = "your-bucket-name"; // The name of the bucket
+        string directoryPath = "path text/"; // The directory path inside the bucket
+        
+        // Initialize AWS credentials and configuration
+        var credentials = new BasicAWSCredentials(accessKey, secretKey);
+        
+        var config = new AmazonS3Config
+        {
+            RegionEndpoint = RegionEndpoint.USEast1, // This can be any valid region
+            ServiceURL = endpoint, // Custom endpoint for S3-compatible storage
+            SignatureVersion = "2", // Use Signature Version 2
+            ForcePathStyle = true, // Needed for S3-compatible services (non-AWS S3)
+            UseHttp = true, // Ensure it's using HTTP or HTTPS based on endpoint
+        };
+
+        // Initialize S3 client with custom endpoint and configuration
+        using (var s3Client = new AmazonS3Client(credentials, config))
+        {
+            try
+            {
+                // List objects in the specified directory
+                var listRequest = new ListObjectsV2Request
+                {
+                    BucketName = bucketName,
+                    Prefix = directoryPath // Filter by the directory path (optional)
+                };
+
+                // Get list of objects
+                var listResponse = await s3Client.ListObjectsV2Async(listRequest);
+                if (listResponse.S3Objects.Count == 0)
+                {
+                    Console.WriteLine("No files found in the specified directory.");
+                    return;
+                }
+
+                // Filter files uploaded today
+                var today = DateTime.UtcNow.Date;
+                var filesToDownload = listResponse.S3Objects
+                    .Where(obj => obj.LastModified.Date == today) // Filter by today's date
+                    .OrderByDescending(obj => obj.LastModified) // Sort by newest file first
+                    .ToList();
+
+                if (filesToDownload.Count == 0)
+                {
+                    Console.WriteLine("No files uploaded today.");
+                    return;
+                }
+
+                // Download each of the newest files
+                foreach (var file in filesToDownload)
+                {
+                    Console.WriteLine($"Downloading file: {file.Key} (Uploaded: {file.LastModified})");
+
+                    var downloadRequest = new GetObjectRequest
+                    {
+                        BucketName = bucketName,
+                        Key = file.Key
+                    };
+
+                    var downloadResponse = await s3Client.GetObjectAsync(downloadRequest);
+                    string downloadPath = Path.Combine(Directory.GetCurrentDirectory(), file.Key);
+
+                    // Ensure the directory exists before downloading
+                    var directory = Path.GetDirectoryName(downloadPath);
+                    if (!Directory.Exists(directory))
+                    {
+                        Directory.CreateDirectory(directory);
+                    }
+
+                    // Download the file to the local machine
+                    await downloadResponse.WriteResponseStreamToFileAsync(downloadPath, false, default);
+
+                    Console.WriteLine($"File downloaded successfully: {downloadPath}");
+                }
+            }
+            catch (AmazonS3Exception e)
+            {
+                Console.WriteLine("Error occurred while accessing the S3 bucket: " + e.Message);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("An unexpected error occurred: " + e.Message);
+            }
+        }
+    }
+}
