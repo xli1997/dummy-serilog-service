@@ -1,0 +1,55 @@
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using Amazon;
+using Amazon.S3;
+using Amazon.S3.Model;
+using Amazon.Runtime;
+using Amazon.S3.Transfer;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Define the S3 service point, access keys, and other configurations
+        string endpoint = "https://textA"; // S3-compatible endpoint URL
+        string accessKey = "textB"; // Your Access Key
+        string secretKey = "textC"; // Your Secret Key
+        string bucketName = "your-bucket-name"; // Name of the bucket you want to use
+        string filePath = "path/to/your/file.txt"; // Path to the file you want to upload
+        
+        // Initialize AWS credentials and configuration
+        var credentials = new BasicAWSCredentials(accessKey, secretKey);
+        
+        var config = new AmazonS3Config
+        {
+            RegionEndpoint = RegionEndpoint.USEast1, // This can be any valid region
+            ServiceURL = endpoint, // Custom endpoint for S3-compatible storage
+            SignatureVersion = "2", // Use Signature Version 2
+            ForcePathStyle = true, // Needed for S3-compatible services (non-AWS S3)
+            UseHttp = true, // Ensure it's using HTTP or HTTPS based on endpoint
+        };
+
+        // Initialize S3 client with custom endpoint and configuration
+        using (var s3Client = new AmazonS3Client(credentials, config))
+        {
+            try
+            {
+                // Create an upload request
+                var transferUtility = new TransferUtility(s3Client);
+
+                // Upload the file
+                await transferUtility.UploadAsync(filePath, bucketName);
+                Console.WriteLine("File uploaded successfully.");
+            }
+            catch (AmazonS3Exception e)
+            {
+                Console.WriteLine("Error occurred while uploading the file: " + e.Message);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("An unexpected error occurred: " + e.Message);
+            }
+        }
+    }
+}
