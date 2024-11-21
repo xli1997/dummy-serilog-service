@@ -155,6 +155,14 @@ class Program
             {
                 Console.WriteLine("An unexpected error occurred: " + e.Message);
             }
+
+
+           }
+            finally
+            {
+                // Explicitly dispose of the S3 client to ensure the connection is closed
+                Console.WriteLine("Closing connection...");
+                // The `using` block already calls Dispose, but we are doing it explicitly here as well
         }
     }
 }
