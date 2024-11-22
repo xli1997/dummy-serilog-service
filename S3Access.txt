@@ -527,3 +527,27 @@ class Program
 }
 
 
+using System.Data.SqlClient;
+
+// Assume you have a dictionary row.Value with keys and values
+var fields = string.Join(", ", row.Value.Keys);
+var parameterNames = string.Join(", ", row.Value.Keys.Select(k => $"@{k}"));
+var query = $"INSERT INTO Person ({fields}) VALUES ({parameterNames})";
+
+using (var connection = new SqlConnection("YourConnectionString"))
+{
+    using (var command = new SqlCommand(query, connection))
+    {
+        // Add parameters to the command
+        foreach (var kvp in row.Value)
+        {
+            command.Parameters.AddWithValue($"@{kvp.Key}", kvp.Value ?? DBNull.Value);
+        }
+
+        connection.Open();
+        command.ExecuteNonQuery();
+    }
+}
+
+
+
