@@ -1,0 +1,60 @@
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using Amazon;
+using Amazon.S3;
+using Amazon.S3.Transfer;
+using Amazon.Runtime;
+using Microsoft.Extensions.Configuration;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Load configurations from appsettings.json
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .Build();
+
+        // Retrieve S3 configurations
+        var s3ConfigSection = configuration.GetSection("S3Settings");
+        string endpoint = s3ConfigSection["Endpoint"];
+        string accessKey = s3ConfigSection["AccessKey"];
+        string secretKey = s3ConfigSection["SecretKey"];
+        string bucketName = s3ConfigSection["BucketName"];
+        string filePath = s3ConfigSection["FilePath"];
+
+        // Initialize AWS credentials and configuration
+        var credentials = new BasicAWSCredentials(accessKey, secretKey);
+
+        var config = new AmazonS3Config
+        {
+            ServiceURL = endpoint,
+            ForcePathStyle = true,
+            UseHttp = true,
+        };
+
+        // Initialize S3 client with custom endpoint and configuration
+        using (var s3Client = new AmazonS3Client(credentials, config))
+        {
+            try
+            {
+                // Create an upload request
+                var transferUtility = new TransferUtility(s3Client);
+
+                // Upload the file
+                await transferUtility.UploadAsync(filePath, bucketName);
+                Console.WriteLine("File uploaded successfully.");
+            }
+            catch (AmazonS3Exception e)
+            {
+                Console.WriteLine("Error occurred while uploading the file: " + e.Message);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("An unexpected error occurred: " + e.Message);
+            }
+        }
+    }
+}
