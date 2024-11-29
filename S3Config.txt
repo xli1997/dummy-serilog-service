@@ -58,3 +58,15 @@ class Program
         }
     }
 }
+
+
+{
+  "S3Settings": {
+    "Endpoint": "https://textA",
+    "AccessKey": "textB",
+    "SecretKey": "textC",
+    "BucketName": "your-bucket-name",
+    "FilePath": "path/to/your/file.txt"
+  }
+}
+
