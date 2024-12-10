@@ -1,0 +1,64 @@
+Here are the detailed steps to set up a scheduled task in Windows Server 2019 to run a program (A.exe) using a service account at 6:00 AM:
+
+Step 1: Prepare the Service Account
+Ensure Service Account Permissions:
+
+The service account you intend to use must have the necessary permissions to run the task.
+Verify it has "Log on as a batch job" rights:
+Open Local Security Policy → Security Settings → Local Policies → User Rights Assignment.
+Find Log on as a batch job, add the service account.
+Ensure Access to A.exe:
+
+Confirm the service account has permission to execute A.exe and access any required files or resources.
+
+Step 2: Open Task Scheduler
+Log in to the server with administrative credentials.
+Open Task Scheduler:
+Press Win + S, type Task Scheduler, and press Enter.
+
+Step 3: Create a New Task
+In Task Scheduler, select Create Task from the right-hand Actions pane.
+Fill in the General tab:
+Name: Enter a descriptive name (e.g., Run A.exe Daily).
+Description: Optionally, provide a brief description.
+Security options:
+Select Run whether user is logged on or not.
+Check Run with highest privileges.
+Change User or Group: Click this button, enter the service account name, and click OK.
+
+Step 4: Set the Trigger
+Go to the Triggers tab and click New.
+Configure the trigger:
+Begin the task: Select On a schedule.
+Settings: Choose Daily and set the start time to 6:00:00 AM.
+Ensure Enabled is checked.
+Click OK to save the trigger.
+
+Step 5: Set the Action
+Go to the Actions tab and click New.
+Configure the action:
+Action: Select Start a program.
+Program/script: Browse or type the full path to A.exe.
+Add arguments (optional): If your program requires arguments, enter them here.
+Start in (optional): Specify the directory where A.exe is located (optional but recommended).
+Click OK to save the action.
+
+Step 6: Configure Additional Settings
+Go to the Conditions tab:
+Adjust power or idle conditions if necessary. For servers, you might want to uncheck Start the task only if the computer is on AC power.
+Go to the Settings tab:
+Check Allow task to be run on demand.
+Set If the task fails, restart every to retry if it fails.
+Ensure Stop the task if it runs longer than has an appropriate value, or uncheck it if the task duration is indefinite.
+
+Step 7: Save and Test the Task
+Click OK to save the task.
+When prompted, enter the password for the service account.
+Test the task:
+In Task Scheduler, right-click the task and select Run.
+Verify the program executes correctly.
+
+Step 8: Verify Task Execution
+Check the History tab of the task to ensure it ran successfully.
+Verify logs or outputs of A.exe to confirm the desired results.
+This setup ensures that A.exe will run every day at 6:00 AM under the service account with the specified credentials.
