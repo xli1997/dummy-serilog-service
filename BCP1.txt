@@ -1,0 +1,67 @@
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Collections.Generic;
+
+namespace BulkCopyExample
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Define the connection string to the SQL Server database
+            string connectionString = "Server=YOUR_SERVER;Database=YOUR_DATABASE;Trusted_Connection=True;";
+
+            // Define the table name to insert data into
+            string tableName = "YourTargetTable";
+
+            // Generate a DataTable with sample data
+            DataTable dataTable = GenerateSampleData();
+
+            // Perform bulk copy operation
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    connection.Open();
+
+                    using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
+                    {
+                        bulkCopy.DestinationTableName = tableName;
+
+                        // Optionally map columns
+                        bulkCopy.ColumnMappings.Add("Id", "Id");
+                        bulkCopy.ColumnMappings.Add("Name", "Name");
+                        bulkCopy.ColumnMappings.Add("Age", "Age");
+
+                        // Perform the bulk copy
+                        bulkCopy.WriteToServer(dataTable);
+
+                        Console.WriteLine("Data has been successfully inserted into the table.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("An error occurred: " + ex.Message);
+                }
+            }
+        }
+
+        static DataTable GenerateSampleData()
+        {
+            DataTable table = new DataTable();
+
+            // Define columns
+            table.Columns.Add("Id", typeof(int));
+            table.Columns.Add("Name", typeof(string));
+            table.Columns.Add("Age", typeof(int));
+
+            // Add rows (sample data)
+            table.Rows.Add(1, "Alice", 30);
+            table.Rows.Add(2, "Bob", 25);
+            table.Rows.Add(3, "Charlie", 35);
+
+            return table;
+        }
+    }
+}
