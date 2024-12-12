@@ -1,0 +1,88 @@
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.IO;
+
+namespace BulkCopyCSVExample
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Define the connection string to the SQL Server database
+            string connectionString = "Server=YOUR_SERVER;Database=YOUR_DATABASE;Trusted_Connection=True;";
+
+            // Define the table name to insert data into
+            string tableName = "YourTargetTable";
+
+            // Path to the CSV file containing the data
+            string csvFilePath = "path/to/your/data.csv";
+
+            // Read the CSV file and create a DataTable
+            DataTable dataTable = ReadCsvToDataTable(csvFilePath);
+
+            // Perform bulk copy operation
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    connection.Open();
+
+                    using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
+                    {
+                        bulkCopy.DestinationTableName = tableName;
+
+                        // Perform the bulk copy
+                        bulkCopy.WriteToServer(dataTable);
+
+                        Console.WriteLine("Data has been successfully inserted into the table.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("An error occurred: " + ex.Message);
+                }
+            }
+        }
+
+        static DataTable ReadCsvToDataTable(string filePath)
+        {
+            DataTable table = new DataTable();
+
+            try
+            {
+                using (StreamReader reader = new StreamReader(filePath))
+                {
+                    bool isHeader = true;
+
+                    while (!reader.EndOfStream)
+                    {
+                        string line = reader.ReadLine();
+                        string[] values = line.Split(',');
+
+                        if (isHeader)
+                        {
+                            // Add columns to the DataTable
+                            foreach (var column in values)
+                            {
+                                table.Columns.Add(column.Trim());
+                            }
+                            isHeader = false;
+                        }
+                        else
+                        {
+                            // Add rows to the DataTable
+                            table.Rows.Add(values);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error reading CSV file: " + ex.Message);
+            }
+
+            return table;
+        }
+    }
+}
