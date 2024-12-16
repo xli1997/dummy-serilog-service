@@ -20,3 +20,34 @@
     ]
   }
 }
+using System;
+using Amazon.S3;
+using Amazon.S3.Model;
+using System.Threading.Tasks;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Set up the S3 client
+        var s3Client = new AmazonS3Client();
+
+        try
+        {
+            // List all S3 buckets
+            var response = await s3Client.ListBucketsAsync();
+
+            Console.WriteLine("Buckets:");
+            foreach (var bucket in response.Buckets)
+            {
+                Console.WriteLine($"- {bucket.BucketName} (Created on {bucket.CreationDate})");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
+    }
+}
+
+
