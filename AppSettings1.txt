@@ -51,3 +51,22 @@ class Program
 }
 
 
+import json
+
+# Specify the path to your JSON file
+file_path = 'data.json'
+
+try:
+    # Open the JSON file and load its content into a dictionary
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+        print("JSON file successfully loaded into a dictionary.")
+        print(data)  # Print the dictionary (optional)
+except FileNotFoundError:
+    print(f"Error: The file '{file_path}' was not found.")
+except json.JSONDecodeError:
+    print(f"Error: The file '{file_path}' is not a valid JSON file.")
+except Exception as e:
+    print(f"An unexpected error occurred: {e}")
+
+
