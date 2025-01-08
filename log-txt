@@ -1,0 +1,50 @@
+using System;
+using System.IO;
+
+namespace SingleFileApp
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            string logFilePath = Path.Combine(Directory.GetCurrentDirectory(), "log.txt");
+
+            try
+            {
+                // Log startup message
+                LogMessage(logFilePath, "Application started.");
+
+                Console.WriteLine("Hello, single-file world!");
+                LogMessage(logFilePath, "Displayed greeting message.");
+
+                // Simulate some work
+                LogMessage(logFilePath, "Performing some operations...");
+                PerformOperations(logFilePath);
+
+                // Log shutdown message
+                LogMessage(logFilePath, "Application finished successfully.");
+            }
+            catch (Exception ex)
+            {
+                // Log any exceptions
+                LogMessage(logFilePath, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        static void PerformOperations(string logFilePath)
+        {
+            // Example operation
+            LogMessage(logFilePath, "Operation 1 completed.");
+            LogMessage(logFilePath, "Operation 2 completed.");
+        }
+
+        static void LogMessage(string filePath, string message)
+        {
+            string logEntry = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message}";
+            Console.WriteLine(logEntry);
+
+            // Write log entry to the file
+            File.AppendAllText(filePath, logEntry + Environment.NewLine);
+        }
+    }
+}
