@@ -1,3 +1,56 @@
+
+using System;
+using System.Data.SqlClient;
+
+namespace TruncateTableApp
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Replace with your SQL Server connection string
+            string connectionString = "Server=your_server_name;Database=your_database_name;User Id=your_username;Password=your_password;";
+
+            // Table to truncate
+            string tableName = "TableA";
+
+            try
+            {
+                Console.WriteLine($"Connecting to database and truncating table: {tableName}...");
+
+                // Call the method to truncate the table
+                TruncateTable(connectionString, tableName);
+
+                Console.WriteLine($"Table {tableName} truncated successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
+
+        static void TruncateTable(string connectionString, string tableName)
+        {
+            // SQL command to truncate the table
+            string query = $"TRUNCATE TABLE {tableName}";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
 using System;
 using System.IO;
 
