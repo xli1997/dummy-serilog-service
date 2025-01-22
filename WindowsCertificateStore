@@ -49,3 +49,56 @@ class Program
         return null; // Certificate not found
     }
 }
+
+using System;
+using System.Security.Cryptography.X509Certificates;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Define the certificate's "Issued To" name (Subject Name)
+        string certificateIssuedTo = "YourIssuedToName";
+
+        try
+        {
+            // Retrieve the certificate from the local machine store
+            var certificate = GetCertificateByIssuedTo(certificateIssuedTo);
+
+            if (certificate != null)
+            {
+                Console.WriteLine($"Certificate found: {certificate.Subject}");
+                // Check if the private key is accessible
+                Console.WriteLine($"Has private key: {certificate.HasPrivateKey}");
+            }
+            else
+            {
+                Console.WriteLine("Certificate not found.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    static X509Certificate2? GetCertificateByIssuedTo(string issuedTo)
+    {
+        using (var store = new X509Store(StoreName.My, StoreLocation.LocalMachine))
+        {
+            store.Open(OpenFlags.ReadOnly);
+
+            // Search for the certificate by "Issued To" (Subject Name)
+            foreach (var cert in store.Certificates)
+            {
+                if (cert.SubjectName.Name != null && cert.SubjectName.Name.Contains($"CN={issuedTo}", StringComparison.OrdinalIgnoreCase))
+                {
+                    return cert; // Return the certificate directly
+                }
+            }
+        }
+
+        return null; // Certificate not found
+    }
+}
+
