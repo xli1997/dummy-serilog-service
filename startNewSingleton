@@ -1,0 +1,68 @@
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
+namespace SingletonWithStoredProcedure
+{
+    // Interface for the database service
+    public interface IDatabaseService
+    {
+        void ExecuteStoredProcedure(string procedureName, params SqlParameter[] parameters);
+    }
+
+    // Implementation of the database service
+    public class DatabaseService : IDatabaseService
+    {
+        private readonly string _connectionString;
+
+        public DatabaseService(string connectionString)
+        {
+            _connectionString = connectionString;
+        }
+
+        public void ExecuteStoredProcedure(string procedureName, params SqlParameter[] parameters)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                using (var command = new SqlCommand(procedureName, connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    if (parameters != null)
+                    {
+                        command.Parameters.AddRange(parameters);
+                    }
+
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                    Console.WriteLine($"Stored procedure '{procedureName}' executed successfully.");
+                }
+            }
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Build the host
+            var host = Host.CreateDefaultBuilder(args)
+                .ConfigureServices((context, services) =>
+                {
+                    // Register DatabaseService as a singleton
+                    services.AddSingleton<IDatabaseService>(provider =>
+                        new DatabaseService("YourConnectionStringHere"));
+                })
+                .Build();
+
+            // Resolve the singleton and execute the stored procedure
+            var dbService = host.Services.GetRequiredService<IDatabaseService>();
+
+            // Example: Execute a stored procedure
+            dbService.ExecuteStoredProcedure("YourStoredProcedureName",
+                new SqlParameter("@Parameter1", SqlDbType.Int) { Value = 123 },
+                new SqlParameter("@Parameter2", SqlDbType.NVarChar) { Value = "TestValue" });
+        }
+    }
+}
