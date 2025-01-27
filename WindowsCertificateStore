@@ -186,4 +186,77 @@ class Program
             writer.WriteLine(BitConverter.ToString(cert.RawData).Replace("-", " "));
         }
     }
+}using System;
+using System.IO;
+using RestSharp;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Example RestRequest
+        var request = new RestRequest("https://api.example.com/resource", Method.Get);
+        request.AddHeader("Authorization", "Bearer your_token");
+        request.AddQueryParameter("param1", "value1");
+        request.AddQueryParameter("param2", "value2");
+        request.AddBody(new { key1 = "value1", key2 = "value2" });
+
+        // Output file path
+        string outputFilePath = "RestRequestDetails.txt";
+
+        try
+        {
+            // Write request details to a file
+            WriteRequestDetailsToFile(request, outputFilePath);
+
+            Console.WriteLine($"Request details written to: {outputFilePath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    static void WriteRequestDetailsToFile(RestRequest request, string filePath)
+    {
+        using (var writer = new StreamWriter(filePath))
+        {
+            writer.WriteLine("RestRequest Details:");
+            writer.WriteLine("--------------------");
+            writer.WriteLine($"Resource: {request.Resource}");
+            writer.WriteLine($"Method: {request.Method}");
+            writer.WriteLine($"Timeout: {request.Timeout}");
+            writer.WriteLine($"Request Format: {request.RequestFormat}");
+            writer.WriteLine();
+
+            writer.WriteLine("Headers:");
+            foreach (var header in request.Parameters)
+            {
+                if (header.Type == ParameterType.HttpHeader)
+                {
+                    writer.WriteLine($"- {header.Name}: {header.Value}");
+                }
+            }
+            writer.WriteLine();
+
+            writer.WriteLine("Query Parameters:");
+            foreach (var queryParam in request.Parameters)
+            {
+                if (queryParam.Type == ParameterType.QueryString)
+                {
+                    writer.WriteLine($"- {queryParam.Name}: {queryParam.Value}");
+                }
+            }
+            writer.WriteLine();
+
+            writer.WriteLine("Body:");
+            foreach (var bodyParam in request.Parameters)
+            {
+                if (bodyParam.Type == ParameterType.RequestBody)
+                {
+                    writer.WriteLine($"- {bodyParam.Name}: {bodyParam.Value}");
+                }
+            }
+        }
+    }
 }
