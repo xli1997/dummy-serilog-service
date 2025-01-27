@@ -102,3 +102,88 @@ class Program
     }
 }
 
+using System;
+using System.IO;
+using System.Security.Cryptography.X509Certificates;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Define the certificate's "Issued To" name (Subject Name)
+        string certificateIssuedTo = "YourIssuedToName";
+        string outputFilePath = "CertificateDetails.txt";
+
+        try
+        {
+            // Retrieve the certificate from the local machine store
+            var certificate = GetCertificateByIssuedTo(certificateIssuedTo, outputFilePath);
+
+            if (certificate != null)
+            {
+                Console.WriteLine($"Certificate found: {certificate.Subject}");
+                Console.WriteLine($"Certificate details written to: {outputFilePath}");
+            }
+            else
+            {
+                Console.WriteLine("Certificate not found.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    static X509Certificate2? GetCertificateByIssuedTo(string issuedTo, string outputFilePath)
+    {
+        using (var store = new X509Store(StoreName.My, StoreLocation.LocalMachine))
+        {
+            store.Open(OpenFlags.ReadOnly);
+
+            // Search for the certificate by "Issued To" (Subject Name)
+            foreach (var cert in store.Certificates)
+            {
+                if (cert.SubjectName.Name != null && cert.SubjectName.Name.Contains($"CN={issuedTo}", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Write certificate details to a file
+                    WriteCertificateDetailsToFile(cert, outputFilePath);
+
+                    return cert; // Return the certificate
+                }
+            }
+        }
+
+        return null; // Certificate not found
+    }
+
+    static void WriteCertificateDetailsToFile(X509Certificate2 cert, string filePath)
+    {
+        using (var writer = new StreamWriter(filePath))
+        {
+            writer.WriteLine("Certificate Details:");
+            writer.WriteLine("--------------------");
+            writer.WriteLine($"Subject: {cert.Subject}");
+            writer.WriteLine($"Issuer: {cert.Issuer}");
+            writer.WriteLine($"Version: {cert.Version}");
+            writer.WriteLine($"Valid From: {cert.NotBefore}");
+            writer.WriteLine($"Valid To: {cert.NotAfter}");
+            writer.WriteLine($"Thumbprint: {cert.Thumbprint}");
+            writer.WriteLine($"Serial Number: {cert.SerialNumber}");
+            writer.WriteLine($"Friendly Name: {cert.FriendlyName}");
+            writer.WriteLine($"Has Private Key: {cert.HasPrivateKey}");
+            writer.WriteLine($"Signature Algorithm: {cert.SignatureAlgorithm.FriendlyName}");
+            writer.WriteLine();
+
+            writer.WriteLine("Extensions:");
+            foreach (var extension in cert.Extensions)
+            {
+                writer.WriteLine($"- {extension.Oid.FriendlyName} ({extension.Oid.Value}): {extension.Format(true)}");
+            }
+
+            writer.WriteLine();
+            writer.WriteLine("Raw Data:");
+            writer.WriteLine(BitConverter.ToString(cert.RawData).Replace("-", " "));
+        }
+    }
+}
