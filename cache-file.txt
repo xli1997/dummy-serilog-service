@@ -1,0 +1,71 @@
+using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+
+class Program
+{
+    private static readonly string FilePath = "cache.bin";
+    private static readonly string Password = "StrongPassword123"; // Replace with a secure key
+
+    static void Main()
+    {
+        string originalPhrase = "Hello, this is a secret message!";
+        
+        EncryptAndSaveToFile(originalPhrase);
+        string decryptedPhrase = ReadFromFileAndDecrypt();
+
+        Console.WriteLine($"Original: {originalPhrase}");
+        Console.WriteLine($"Decrypted: {decryptedPhrase}");
+    }
+
+    public static void EncryptAndSaveToFile(string phrase)
+    {
+        using (Aes aes = Aes.Create())
+        {
+            aes.Key = DeriveKey(Password);
+            aes.GenerateIV(); // Generate a new IV for each encryption
+
+            using (MemoryStream memoryStream = new MemoryStream())
+            using (CryptoStream cryptoStream = new CryptoStream(memoryStream, aes.CreateEncryptor(), CryptoStreamMode.Write))
+            {
+                memoryStream.Write(aes.IV, 0, aes.IV.Length); // Save IV at the beginning of the file
+
+                byte[] phraseBytes = Encoding.UTF8.GetBytes(phrase);
+                cryptoStream.Write(phraseBytes, 0, phraseBytes.Length);
+                cryptoStream.FlushFinalBlock();
+
+                File.WriteAllBytes(FilePath, memoryStream.ToArray());
+            }
+        }
+    }
+
+    public static string ReadFromFileAndDecrypt()
+    {
+        byte[] encryptedData = File.ReadAllBytes(FilePath);
+
+        using (Aes aes = Aes.Create())
+        {
+            aes.Key = DeriveKey(Password);
+
+            byte[] iv = new byte[aes.IV.Length];
+            Array.Copy(encryptedData, iv, iv.Length);
+            aes.IV = iv;
+
+            using (MemoryStream memoryStream = new MemoryStream(encryptedData, iv.Length, encryptedData.Length - iv.Length))
+            using (CryptoStream cryptoStream = new CryptoStream(memoryStream, aes.CreateDecryptor(), CryptoStreamMode.Read))
+            using (StreamReader reader = new StreamReader(cryptoStream))
+            {
+                return reader.ReadToEnd();
+            }
+        }
+    }
+
+    private static byte[] DeriveKey(string password)
+    {
+        using (var keyDerivation = new Rfc2898DeriveBytes(password, 16, 100000, HashAlgorithmName.SHA256))
+        {
+            return keyDerivation.GetBytes(32); // 256-bit key for AES
+        }
+    }
+}
