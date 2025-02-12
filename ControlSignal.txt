@@ -1,0 +1,46 @@
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System;
+using System.ServiceProcess;
+using System.Threading;
+using System.Threading.Tasks;
+
+public class Worker : BackgroundService
+{
+    private readonly ILogger<Worker> _logger;
+    private static bool _triggerAction = false; // Flag for external trigger
+
+    public Worker(ILogger<Worker> logger)
+    {
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Windows Service started at: {time}", DateTimeOffset.Now);
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            if (_triggerAction)
+            {
+                _logger.LogInformation("External trigger received. Performing action...");
+                PerformAction();
+                _triggerAction = false;
+            }
+            await Task.Delay(1000, stoppingToken); // Check every second
+        }
+
+        _logger.LogInformation("Windows Service is stopping.");
+    }
+
+    private void PerformAction()
+    {
+        _logger.LogInformation("Performing the triggered action at {time}", DateTimeOffset.Now);
+        // Add your logic here (e.g., file processing, database update, etc.)
+    }
+
+    public static void TriggerAction()
+    {
+        _triggerAction = true;
+    }
+}
