@@ -1,4 +1,20 @@
 
+$serviceName = "MyWindowsService"
+
+# Ensure the service is running
+$service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+if ($service.Status -ne "Running") {
+    Write-Host "Starting $serviceName..."
+    Start-Service -Name $serviceName
+    Start-Sleep -Seconds 2
+}
+
+# Send a custom command (uses a known Windows Service control mechanism)
+sc control $serviceName 128
+
+Write-Host "Trigger command sent to $serviceName."
+
+
 public class MyWindowsService : ServiceBase
 {
     protected override void OnStart(string[] args)
