@@ -1,4 +1,21 @@
 
+public class MyWindowsService : ServiceBase
+{
+    protected override void OnStart(string[] args)
+    {
+        Task.Run(() => new Worker(null).ExecuteAsync(CancellationToken.None));
+    }
+
+    protected override void OnCustomCommand(int command)
+    {
+        if (command == 128) // Custom trigger signal from PowerShell
+        {
+            Worker.TriggerAction();
+        }
+    }
+}
+
+
 builder.Services.Configure<HostOptions>(options =>
 {
     options.ServicesStartMode = ServiceStartMode.Automatic;
