@@ -1,3 +1,19 @@
+
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System.ServiceProcess;
+
+HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
+builder.Services.AddWindowsService(options =>
+{
+    options.ServiceName = "MyWindowsService";
+});
+builder.Services.AddHostedService<Worker>();
+
+IHost host = builder.Build();
+host.Run();
+
+
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -44,3 +60,5 @@ public class Worker : BackgroundService
         _triggerAction = true;
     }
 }
+
+
