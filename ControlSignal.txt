@@ -1,4 +1,9 @@
 
+builder.Services.Configure<HostOptions>(options =>
+{
+    options.ServicesStartMode = ServiceStartMode.Automatic;
+});
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.ServiceProcess;
