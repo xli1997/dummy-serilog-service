@@ -1,0 +1,40 @@
+import os
+import re
+
+# Get the current directory
+current_dir = os.getcwd()
+
+# Iterate through all files in the current directory
+for filename in os.listdir(current_dir):
+    # Check if the item is a file (not a directory)
+    if os.path.isfile(os.path.join(current_dir, filename)):
+        # Check if "2025-05-07" is in the filename
+        if "2025-05-07" in filename:
+            # Create new filename by replacing the date
+            new_filename = filename.replace("2025-05-07", "2025-05-30")
+            # Rename the file
+            os.rename(
+                os.path.join(current_dir, filename),
+                os.path.join(current_dir, new_filename)
+            )
+            print(f"Renamed: {filename} -> {new_filename}")
+        
+        # Read the file content
+        file_path = os.path.join(current_dir, filename)
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                content = file.read()
+            
+            # Replace the specified date strings
+            updated_content = content.replace("5/7/2025", "5/30/2025")
+            updated_content = updated_content.replace("05/07", "05/30")
+            
+            # Write back to the file if changes were made
+            if updated_content != content:
+                with open(file_path, 'w', encoding='utf-8') as file:
+                    file.write(updated_content)
+                print(f"Updated content in: {filename}")
+        except (IOError, UnicodeDecodeError) as e:
+            print(f"Error processing {filename}: {e}")
+
+print("Date update process completed.")
