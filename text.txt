@@ -1,3 +1,19 @@
+# Define the URL
+$url = "http://localhost:80/getfile"
+
+try {
+    # Send the GET request
+    $response = Invoke-WebRequest -Uri $url -Method Get
+    
+    # Output the response
+    Write-Output "Response Status: $($response.StatusCode) $($response.StatusDescription)"
+    Write-Output "Response Content: $($response.Content)"
+}
+catch {
+    # Handle errors
+    Write-Output "Error: $($_.Exception.Message)"
+}
+
 
 To modify the RunSQL function to return a value indicating the success or failure of the operation, we can change the return type to bool and return true for a successful run and false for any exceptions caught. Here’s the updated code:
 
