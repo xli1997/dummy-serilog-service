@@ -1,3 +1,25 @@
+Funds for W3 bots
+Account 764086950919863 Routing 121145307
+SWIFT/BIC Code ? CLNOUS66
+
+Company Name W3 Bots C/O Hack Club
+
+
+HACK FOUNDATION
+
+Remove HACK FOUNDATION from your favorite causes
+Registration ID:
+812908499
+Payment Type:
+Website:
+https://hackclub.com/ 
+donation link 
+https://hcb.hackclub.com/donations/start/w3-bots
+
+
+
+
+
 # Define the URL
 $url = "http://localhost:80/getfile"
 
